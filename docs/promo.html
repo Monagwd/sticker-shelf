@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Sticker Shelf promo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1280px; height: 640px; background: #f6efea; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif; color: #3d3330; overflow: hidden; }
+  .frame { position: absolute; inset: 22px; border-radius: 34px; background: linear-gradient(135deg, #fdf8f4 0%, #f9eee8 55%, #f4e6e1 100%);
+           border: 1px solid #ecdcd3; overflow: hidden; }
+  .dots { position: absolute; inset: 0; background-image: radial-gradient(#e9d6cc 1.2px, transparent 1.3px); background-size: 22px 22px; opacity: .55; }
+  .tagline { position: absolute; right: 48px; top: 40px; font: 15px/1 Consolas, "Cascadia Mono", monospace; letter-spacing: .12em; color: #b07a68; }
+
+  /* ── left: two phone cards ── */
+  .phone { position: absolute; width: 270px; border-radius: 26px; background: #fffdfb; border: 1px solid #ead9cf;
+           box-shadow: 0 22px 50px rgba(120, 80, 60, .16), 0 2px 6px rgba(120, 80, 60, .08); overflow: hidden; }
+  .bar { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid #f0e4dc;
+         font-size: 12px; font-weight: 700; color: #6f5b53; background: #fbf5f1; }
+  .bar i { width: 7px; height: 7px; border-radius: 50%; background: #e3c6b8; display: inline-block; }
+  .shelf { left: 64px; top: 92px; height: 460px; transform: rotate(-4deg); }
+  .chat { left: 300px; top: 70px; height: 500px; z-index: 2; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; }
+  .st { border-radius: 14px; aspect-ratio: 1; display: grid; place-items: center; text-align: center; font-weight: 700; line-height: 1.25; }
+  .st b { display: block; font-size: 13px; letter-spacing: -.02em; }
+  .st small { display: block; font-size: 10px; margin-top: 3px; }
+  .lbl { font-size: 11px; color: #6f5b53; text-align: center; margin-top: 4px; }
+  .cell.off { opacity: .4; }
+  .up { margin: 4px 12px 0; border: 1.5px dashed #e2c9bd; border-radius: 14px; padding: 12px 8px; text-align: center; font-size: 12px; color: #b07a68; }
+  .up strong { color: #9a5a46; }
+  .pop { position: absolute; left: 22px; right: 22px; bottom: 26px; background: #fff; border-radius: 16px; padding: 12px 14px;
+         box-shadow: 0 12px 30px rgba(110, 70, 55, .2); border: 1px solid #efdcd2; }
+  .pop p { font-size: 11px; color: #a08a80; }
+  .pop .old { font-size: 12px; color: #b9a49b; text-decoration: line-through; margin-top: 6px; }
+  .pop .new { font-size: 14px; font-weight: 700; color: #8a4b3a; margin-top: 2px; }
+  .pop .new::after { content: "▍"; color: #c98a74; font-weight: 400; }
+
+  .msgs { padding: 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+  .me, .ai { max-width: 82%; padding: 9px 12px; border-radius: 16px; font-size: 12.5px; line-height: 1.5; }
+  .me { align-self: flex-end; background: #e9cfc4; color: #4a332b; border-bottom-right-radius: 6px; }
+  .ai { align-self: flex-start; background: #f5ede8; color: #4a3d38; border-bottom-left-radius: 6px; }
+  .stk { width: 74px; height: 74px; border-radius: 16px; display: grid; place-items: center; text-align: center; font-weight: 700; }
+  .stk.me-s { align-self: flex-end; }
+  .stk.ai-s { align-self: flex-start; }
+  .seen { align-self: stretch; background: #fff7f2; border: 1px dashed #e4c7ba; border-radius: 12px; padding: 8px 10px; font-size: 11px; color: #8f6d60; line-height: 1.55; }
+  .seen code { font-family: Consolas, monospace; color: #b0614a; }
+  .input { position: absolute; left: 12px; right: 12px; bottom: 12px; height: 34px; border-radius: 17px; background: #f6efea; color: #b9a49b;
+           font-size: 12px; display: flex; align-items: center; padding: 0 14px; }
+
+  /* ── right: copy ── */
+  .copy { position: absolute; left: 640px; top: 84px; width: 580px; }
+  .eyebrow { font-size: 17px; letter-spacing: .3em; color: #b07a68; }
+  h1 { margin-top: 16px; font-size: 58px; line-height: 1.18; font-weight: 900; letter-spacing: .02em; color: #3a2e2b; }
+  ul { list-style: none; margin-top: 20px; }
+  li { font-size: 19px; line-height: 1.7; color: #5a4a44; }
+  li em { font-style: normal; color: #a4553f; font-weight: 700; }
+  .en { margin-top: 10px; font-size: 14px; line-height: 1.5; color: #a0908a; font-family: "Segoe UI", sans-serif; }
+  .steps { position: absolute; left: 640px; right: 64px; bottom: 70px; display: flex; justify-content: space-between; }
+  .steps::before { content: ""; position: absolute; left: 7px; right: 60px; top: 7px; height: 2px; background: #e6cfc4; }
+  .step { position: relative; font-size: 14px; color: #6f5b53; }
+  .step::before { content: ""; display: block; width: 14px; height: 14px; border-radius: 50%; background: #b5705a; margin-bottom: 10px; box-shadow: 0 0 0 4px #f9eee8; }
+  .url { position: absolute; left: 640px; bottom: 34px; font: 14px Consolas, monospace; color: #b9a49b; letter-spacing: .04em; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="dots"></div>
+  <div class="tagline">sticker-shelf</div>
+
+  <!-- 抽屉 -->
+  <div class="phone shelf">
+    <div class="bar"><i></i>我的表情包 <span style="font-weight:400;color:#b9a49b">· 6</span></div>
+    <div class="up"><strong>拖进来就存好</strong> · PNG / JPG / GIF / WebP</div>
+    <div class="grid">
+      <div class="cell"><div class="st" style="background:#f8dccf;color:#8a4b3a"><div><b>(｡•́︿•̀｡)</b><small>委屈</small></div></div><div class="lbl">委屈巴巴</div></div>
+      <div class="cell"><div class="st" style="background:#dcebd2;color:#4f6e43"><div><b>(≧▽≦)</b><small>哈哈哈</small></div></div><div class="lbl">笑到打滚</div></div>
+      <div class="cell"><div class="st" style="background:#dfe3f6;color:#4a5486"><div><b>(っ´▽`)っ</b><small>抱抱</small></div></div><div class="lbl">要抱抱</div></div>
+      <div class="cell off"><div class="st" style="background:#f6ebc8;color:#806624"><div><b>(￣^￣)</b><small>哼</small></div></div><div class="lbl">哼 · 不给它用</div></div>
+      <div class="cell"><div class="st" style="background:#efd9ee;color:#7a4677"><div><b>(´▽`ʃ♡ƪ)</b><small>喜欢</small></div></div><div class="lbl">好喜欢</div></div>
+      <div class="cell"><div class="st" style="background:#e4e0dc;color:#5d544f"><div><b>(°ロ°)</b><small>……</small></div></div><div class="lbl">？？？</div></div>
+    </div>
+    <div class="pop">
+      <p>改描述 · 它只靠这句话认图</p>
+      <div class="old">震惊</div>
+      <div class="new">嘴上说不要，其实超想要</div>
+    </div>
+  </div>
+
+  <!-- 聊天 -->
+  <div class="phone chat">
+    <div class="bar"><i></i>和小机的聊天</div>
+    <div class="msgs">
+      <div class="me">要不要吃最后一块蛋糕</div>
+      <div class="ai">不吃，留给你。</div>
+      <div class="stk me-s" style="background:#e4e0dc;color:#5d544f"><div><b style="font-size:15px">(°ロ°)</b><div style="font-size:11px">……</div></div></div>
+      <div class="seen">小机读到的是<br><code>【表情包：嘴上说不要，其实超想要】</code></div>
+      <div class="ai">被你看穿了。那我咬一口，剩下的喂你。</div>
+      <div class="stk ai-s" style="background:#dfe3f6;color:#4a5486"><div><b style="font-size:13px">(っ´▽`)っ</b><div style="font-size:11px">抱抱</div></div></div>
+    </div>
+    <div class="input">说点什么…</div>
+  </div>
+
+  <div class="copy">
+    <div class="eyebrow">给 AI 的表情包小抽屉</div>
+    <h1>随时传，随时改，<br>它就看得懂。</h1>
+    <ul>
+      <li>拖进来就存好，<em>GIF 会动</em>，名字随时改</li>
+      <li>抽象表情包它看不懂？<em>描述你来写</em></li>
+      <li>它会读你的表情包，也会挑一张回你</li>
+    </ul>
+    <p class="en">Drop in your stickers, rename them anytime. Your AI reads them by the words you write —<br>so even the weirdest meme lands the way you mean it.</p>
+  </div>
+  <div class="steps">
+    <div class="step">双击运行</div>
+    <div class="step">拖进表情包</div>
+    <div class="step">写一句描述</div>
+    <div class="step">接到你的 AI</div>
+    <div class="step">它看懂也会发</div>
+  </div>
+  <div class="url">github.com/Monagwd/sticker-shelf</div>
+</div>
+</body>
+</html>
