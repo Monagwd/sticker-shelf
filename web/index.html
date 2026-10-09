@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>表情包小抽屉</title>
+<style>
+  :root {
+    --bg: #f7f4f1; --card: #fffdfb; --ink: #3d3530; --muted: #8b7f77; --line: #e7ddd5;
+    --accent: #b5705a; --accent-soft: #f3e3db; --danger: #b2483d; --shadow: 0 6px 20px rgba(80, 55, 40, .08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1f1b19; --card: #2a2522; --ink: #eee6e0; --muted: #a8998f; --line: #3d3531;
+            --accent: #e09a80; --accent-soft: #3f2e28; --danger: #e8786c; --shadow: 0 6px 20px rgba(0, 0, 0, .3); }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.6 -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif; }
+  main { max-width: 920px; margin: 0 auto; padding: 28px 16px 60px; }
+  h1 { margin: 0; font-size: 24px; letter-spacing: .02em; }
+  .sub { margin: 4px 0 22px; color: var(--muted); font-size: 13px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); margin-bottom: 18px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  input[type=text], textarea { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line);
+         border-radius: 10px; padding: 8px 12px; min-width: 0; }
+  input[type=text] { flex: 1 1 200px; }
+  textarea { width: 100%; min-height: 84px; resize: vertical; }
+  button { font: inherit; border: 0; border-radius: 999px; padding: 8px 16px; cursor: pointer;
+           background: var(--accent); color: #fff; }
+  button.ghost { background: var(--accent-soft); color: var(--accent); }
+  button.small { padding: 4px 10px; font-size: 12px; }
+  button:disabled { opacity: .5; cursor: default; }
+  .drop { border: 1.5px dashed var(--line); border-radius: 14px; padding: 18px; text-align: center; color: var(--muted); margin-top: 12px; }
+  .drop.over { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .note { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+  .status { min-height: 1.4em; font-size: 13px; color: var(--accent); margin: 8px 0 0; }
+  .status.error { color: var(--danger); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 12px; }
+  .item { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .item.off { opacity: .55; }
+  .thumb { aspect-ratio: 1; display: grid; place-items: center; background: var(--bg); border-radius: 10px; overflow: hidden; }
+  .thumb img { width: 100%; height: 100%; object-fit: contain; }
+  .name { font-size: 14px; word-break: break-all; cursor: text; border-radius: 6px; padding: 2px 4px; }
+  .name:hover { background: var(--accent-soft); }
+  .id { font: 11px/1.3 ui-monospace, Consolas, monospace; color: var(--muted); user-select: all; }
+  .item .row { justify-content: space-between; }
+  label.toggle { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); cursor: pointer; }
+  .empty { color: var(--muted); text-align: center; padding: 28px 0; }
+  h2 { font-size: 16px; margin: 0 0 10px; }
+  pre.context { white-space: pre-wrap; word-break: break-all; background: var(--bg); border-radius: 10px; padding: 12px; font-size: 12px; margin: 0; max-height: 220px; overflow: auto; }
+  .bubble { background: var(--bg); border-radius: 14px; padding: 12px 14px; min-height: 46px; }
+  .bubble img.sticker { display: block; max-width: 140px; max-height: 140px; margin: 6px 0; border-radius: 8px; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 13px; margin: 10px 0 6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>表情包小抽屉 · Sticker Shelf</h1>
+  <p class="sub">存你自己的表情包，让小机看得懂、也会发。PNG / JPG / GIF / WebP，单张不超过 5 MB，GIF 会动。</p>
+
+  <section class="panel">
+    <div class="row">
+      <input id="label" type="text" maxlength="40" placeholder="名字（可不填）：比如「开心转圈」「委屈巴巴」">
+      <button id="pick">选图片上传</button>
+      <input id="file" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden>
+    </div>
+    <div id="drop" class="drop">也可以把图片拖到这里（可以一次拖好几张）</div>
+    <p class="note" id="auto-note"></p>
+    <p class="status" id="status" role="status"></p>
+  </section>
+
+  <section class="panel">
+    <div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <h2 style="margin:0">我的表情包 <span id="count" class="note"></span></h2>
+    </div>
+    <div id="grid" class="grid"></div>
+  </section>
+
+  <section class="panel">
+    <h2>试一试</h2>
+    <p class="note" style="margin-top:0">把一段小机的回复贴进来（里面带 <code>[sticker:编号]</code>，或者写成【表情包：名字】也行），看看在聊天里会是什么样。</p>
+    <textarea id="sample" placeholder="好，抱一下。&#10;&#10;[sticker:u-0123456789]"></textarea>
+    <div class="row" style="margin:10px 0"><button id="preview" class="ghost">预览</button></div>
+    <div id="bubble" class="bubble"></div>
+    <details>
+      <summary>小机每轮看到的表情包清单（GET /stickers/context）</summary>
+      <pre id="context" class="context"></pre>
+    </details>
+  </section>
+</main>
+
+<script src="render.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const status = (text, error = false) => { $("status").textContent = text; $("status").className = "status" + (error ? " error" : ""); };
+
+async function api(path, options = {}) {
+  const response = await fetch(path, { cache: "no-store", ...options });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `出错了（${response.status}）`);
+  return data;
+}
+
+async function load() {
+  const data = await api("/stickers/api/list");
+  $("auto-note").textContent = data.auto_label
+    ? "名字不填的话，会让 Claude 看图自动起一个（GIF 只看第一帧）。"
+    : "名字不填的话会先叫「未命名表情」，之后点名字就能改。小机只靠名字认表情包，名字起得准它才用得准。";
+  renderGrid(data.items);
+  $("context").textContent = await (await fetch("/stickers/context", { cache: "no-store" })).text() || "（还没有小机能用的表情包）";
+}
+
+function renderGrid(items) {
+  const grid = $("grid");
+  grid.textContent = "";
+  $("count").textContent = items.length ? `（${items.length}）` : "";
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "还没有表情包，先上传几张吧。";
+    grid.appendChild(empty);
+    return;
+  }
+  for (const item of items.slice().reverse()) {
+    const card = document.createElement("div");
+    card.className = "item" + (item.ai_enabled ? "" : " off");
+
+    const thumb = document.createElement("div");
+    thumb.className = "thumb";
+    const img = document.createElement("img");
+    img.src = item.url; img.alt = item.label; img.loading = "lazy";
+    thumb.appendChild(img);
+
+    const name = document.createElement("div");
+    name.className = "name"; name.textContent = item.label; name.title = "点一下改名";
+    name.onclick = async () => {
+      const next = prompt("新名字（2–10 个字最好，小机靠它认表情包）", item.label);
+      if (next === null || !next.trim() || next.trim() === item.label) return;
+      try { await api("/stickers/api/update", { method: "POST", body: JSON.stringify({ id: item.id, label: next }) }); await load(); }
+      catch (error) { status(error.message, true); }
+    };
+
+    const id = document.createElement("div");
+    id.className = "id"; id.textContent = `[sticker:${item.id}]`; id.title = "这就是小机发它时写的标记";
+
+    const row = document.createElement("div");
+    row.className = "row";
+    const toggle = document.createElement("label");
+    toggle.className = "toggle";
+    const box = document.createElement("input");
+    box.type = "checkbox"; box.checked = item.ai_enabled;
+    box.onchange = async () => {
+      try { await api("/stickers/api/update", { method: "POST", body: JSON.stringify({ id: item.id, ai_enabled: box.checked }) }); await load(); }
+      catch (error) { status(error.message, true); box.checked = !box.checked; }
+    };
+    toggle.append(box, document.createTextNode("小机能用"));
+    const remove = document.createElement("button");
+    remove.className = "ghost small"; remove.textContent = "删除";
+    remove.onclick = async () => {
+      if (!confirm(`删掉「${item.label}」？删了就找不回来了。`)) return;
+      try { await api("/stickers/api/delete", { method: "POST", body: JSON.stringify({ id: item.id }) }); await load(); }
+      catch (error) { status(error.message, true); }
+    };
+    row.append(toggle, remove);
+
+    card.append(thumb, name, id, row);
+    grid.appendChild(card);
+  }
+}
+
+async function upload(files) {
+  files = [...files];
+  if (!files.length) return;
+  const label = $("label").value.trim();
+  $("pick").disabled = true;
+  let done = 0;
+  try {
+    for (const file of files) {
+      status(`上传中… ${done + 1}/${files.length}`);
+      const data = await api("/stickers/api/upload", {
+        method: "POST", body: file,
+        // 一次传好几张时，名字只给第一张用，其余的自动起名或之后再改。
+        headers: { "X-Label": encodeURIComponent(done === 0 ? label : "") },
+      });
+      done += 1;
+      if (data.auto_labelled) status(`已保存，自动起名：「${data.label}」`);
+    }
+    status(`上传好了 ${done} 张。`);
+    $("label").value = "";
+  } catch (error) {
+    status(`${error.message}${done ? `（前 ${done} 张已保存）` : ""}`, true);
+  } finally {
+    $("pick").disabled = false;
+    $("file").value = "";
+    await load();
+  }
+}
+
+$("pick").onclick = () => $("file").click();
+$("file").onchange = () => upload($("file").files);
+const drop = $("drop");
+drop.ondragover = (event) => { event.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = (event) => { event.preventDefault(); drop.classList.remove("over"); upload(event.dataTransfer.files); };
+
+$("preview").onclick = async () => {
+  try {
+    const data = await api("/stickers/normalize", { method: "POST", body: JSON.stringify({ text: $("sample").value }) });
+    StickerShelf.render($("bubble"), data.text, "");
+  } catch (error) { status(error.message, true); }
+};
+
+load().catch((error) => status(error.message, true));
+</script>
+</body>
+</html>
