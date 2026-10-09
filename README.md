@@ -8,6 +8,8 @@
 > Your AI sends `[sticker:id]`, your chat UI turns it into the image; the stickers you send reach the AI as their names,
 > so it understands what you meant.
 
+![预览 · Preview](docs/preview.png)
+
 ---
 
 ## 一、怎么跑 · Setup
